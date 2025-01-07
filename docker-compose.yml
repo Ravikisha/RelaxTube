@@ -1,0 +1,76 @@
+version: '3.8'
+services:
+  # mongo:
+  #   image: mongo:latest
+  #   container_name: mongo
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   networks:
+  #     - mern-network
+
+  # frontend:
+  #   build: ./frontend
+  #   container_name: frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - mern-network
+
+  # backend:
+  #   build:
+  #     context: ./backend
+  #   container_name: backend
+  #   ports:
+  #     - "5000:5000"
+  #   depends_on:
+  #     - mongo
+  #     - kafka
+  #   volumes:
+  #     - ${PWD}/uploads:/app/uploads
+  #   networks:
+  #     - mern-network
+  
+  # transcoding-service:
+  #   build: ./transcoding-service
+  #   depends_on:
+  #     - kafka
+  #     - mongo
+  #   volumes:
+  #     - ${PWD}/uploads:/usr/src/app/uploads
+      
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - mern-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - mern-network
+
+
+volumes:
+  mongo-data:
+
+networks:
+  mern-network:
