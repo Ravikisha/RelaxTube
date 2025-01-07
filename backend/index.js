@@ -26,7 +26,10 @@ app.use(bodyParser.json());
 const storage = multer.diskStorage({
   destination: "../uploads/raw",
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    );
   },
 });
 
@@ -39,15 +42,41 @@ app.get("/videos", async (req, res) => {
   res.status(200).json(videos);
 });
 
+app.get("/videos/:videoId", async (req, res) => {
+  const { videoId } = req.params;
+  const video = await Video.findOne({ videoId });
+
+  if (!video) return res.status(404).send("Video not found.");
+  res.status(200).json(video);
+});
+
+app.get("/thumbnails/:videoId", async (req, res) => {
+  const { videoId } = req.params;
+  const video = await Video.findOne({ videoId });
+
+  if (!video) return res.status(404).send("Video not found.");
+  const thumbnailPath = path.join(
+    __dirname,
+    `../uploads/thumbnails/${videoId}/thumbnail.jpg`
+  );
+  if (!fs.existsSync(thumbnailPath)) {
+    return res.status(404).send("Thumbnail not found.");
+  }
+  res.sendFile(thumbnailPath);
+});
+
 app.post("/upload", upload.single("video"), async (req, res) => {
   const { file } = req;
+  const { title } = req.body;
   if (!file) return res.status(400).send("No file uploaded.");
+  console.log("Title: ", title)
 
   const video = new Video({
     videoId: uuidv4(),
     originalName: file.originalname,
     filePath: file.path,
     status: "pending",
+    title: title
   });
 
   await video.save();
@@ -89,24 +118,6 @@ app.get("/status/:videoId", async (req, res) => {
   res.status(200).json({ status: video.status });
 });
 
-// Serve HLS playlist
-// app.get("/videos/:videoId/playlist.m3u8", async (req, res) => {
-//   const { videoId } = req.params;
-//   const video = await Video.findOne({ videoId });
-
-//   if (!video || video.status !== "completed") {
-//     return res.status(404).send("Video not found or not ready.");
-//   }
-
-//   const playlistPath = path.resolve(`segments/${videoId}/master.m3u8`);
-//   if (!fs.existsSync(playlistPath)) {
-//     return res.status(404).send("Playlist not found.");
-//   }
-
-//   res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
-//   res.sendFile(playlistPath);
-// });
-
 app.get("/videos/:videoId/playlist.m3u8", async (req, res) => {
   const { videoId } = req.params;
   const video = await Video.findOne({ videoId });
@@ -115,7 +126,10 @@ app.get("/videos/:videoId/playlist.m3u8", async (req, res) => {
     return res.status(404).send("Video not found or not ready.");
   }
 
-  const playlistPath = path.join(__dirname, `../uploads/transcoded/segments/${videoId}/master.m3u8`);
+  const playlistPath = path.join(
+    __dirname,
+    `../uploads/transcoded/segments/${videoId}/master.m3u8`
+  );
   if (!fs.existsSync(playlistPath)) {
     return res.status(404).send("Playlist not found.");
   }
@@ -124,22 +138,26 @@ app.get("/videos/:videoId/playlist.m3u8", async (req, res) => {
   res.sendFile(playlistPath);
 });
 
-app.get("/videos/:videoId/:resolution/playlist.m3u8", async(req, res) => {
+app.get("/videos/:videoId/:resolution/playlist.m3u8", async (req, res) => {
   const { videoId, resolution } = req.params;
-  //  path of the file: ../uploads/transcoded/segments/${videoId}/${resolution}/playlist.m3u8
-  // const playlistPath = path.resolve(`../uploads/transcoded/segments/${videoId}/${resolution}/playlist.m3u8`);
-  const playlistPath = path.join(__dirname, `../uploads/transcoded/segments/${videoId}/${resolution}/playlist.m3u8`);
+  const playlistPath = path.join(
+    __dirname,
+    `../uploads/transcoded/segments/${videoId}/${resolution}/playlist.m3u8`
+  );
   if (!fs.existsSync(playlistPath)) {
     return res.status(404).send("Playlist not found.");
   }
   res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
   res.sendFile(playlistPath);
-})
+});
 
 // Serve video segments
 app.get("/videos/:videoId/:resolution/segment_:segmentId.ts", (req, res) => {
   const { videoId, resolution, segmentId } = req.params;
-  const segmentPath  = path.join(__dirname, `../uploads/transcoded/segments/${videoId}/${resolution}/segment_${segmentId}.ts`);
+  const segmentPath = path.join(
+    __dirname,
+    `../uploads/transcoded/segments/${videoId}/${resolution}/segment_${segmentId}.ts`
+  );
   if (!fs.existsSync(segmentPath)) {
     return res.status(404).send("Segment not found.");
   }

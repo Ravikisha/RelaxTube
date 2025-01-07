@@ -1,8 +1,10 @@
 // src/components/Dashboard.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "../api";
+import { Link } from "react-router-dom";
+import VideoGallery from './VideoGallery';
 
-const Dashboard = ({setSelectedVideo}) => {
+const Dashboard = ({ setSelectedVideo }) => {
   const [videos, setVideos] = useState([]);
 
   useEffect(() => {
@@ -19,18 +21,10 @@ const Dashboard = ({setSelectedVideo}) => {
 
   return (
     <div>
-      <h2>Dashboard</h2>
       {videos.length === 0 ? (
         <p>No videos available.</p>
       ) : (
-        <ul>
-          {videos.map((video) => (
-            <li key={video.id}>
-              {video.name} - {video.status}
-              <button onClick={() => setSelectedVideo(video)}>Play</button>
-            </li>
-          ))}
-        </ul>
+        <VideoGallery videos={videos} />
       )}
     </div>
   );

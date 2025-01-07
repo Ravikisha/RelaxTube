@@ -3,10 +3,9 @@ const mongoose = require("mongoose");
 const videoSchema = new mongoose.Schema({
   videoId: { type: String, required: true },
   originalName: { type: String, required: true },
-  resolutions: { type: [String], default: [] },
   status: { type: String, default: "pending" },
   filePath: { type: String, required: true },
-  hlsResolutions: { type: [Object], default: [] }
+  title: {type: String, required: true}
 });
 
 module.exports = mongoose.model("Video", videoSchema);

@@ -38,6 +38,7 @@ const consumer = kafka.consumer({ groupId: "transcoding-group" });
 
         // Transcode video
         await transcodeVideoToHLS(job.filePath, job.videoId);
+        await thumbnailGeneration(job.filePath, job.videoId);
         // Commit the message offset manually after successful processing
         await consumer.commitOffsets([
           {
@@ -53,43 +54,6 @@ const consumer = kafka.consumer({ groupId: "transcoding-group" });
   });
 })();
 
-// async function transcodeVideoToHLS(inputPath, videoId) {
-//   console.log("Start HLS Transcoding for:", videoId);
-
-//   const resolutions = [
-//     { name: "1080p", resolution: "1920x1080", bitrate: "5000k" },
-//     { name: "720p", resolution: "1280x720", bitrate: "3000k" },
-//     { name: "480p", resolution: "854x480", bitrate: "1500k" },
-//   ];
-
-//   try {
-//     for (let { name, resolution, bitrate } of resolutions) {
-//       const outputDir = `segments/${videoId}/${name}`;
-//       const command = `mkdir -p ${outputDir} && ffmpeg -i ${inputPath} -vf scale=${resolution} -b:v ${bitrate} -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputDir}/segment_%03d.ts" ${outputDir}/playlist.m3u8`;
-
-//       console.log("Executing command:", command);
-//       await execCommand(command);
-//     }
-
-//     // Update MongoDB with completed status and HLS paths
-//     const video = await Video.findOne({ videoId });
-//     if (video) {
-//       video.status = "completed";
-//       video.hlsResolutions = resolutions.map((res) => ({
-//         resolution: res.name,
-//         playlist: `segments/${videoId}/${res.name}/playlist.m3u8`,
-//       }));
-//       await video.save();
-//     }
-
-//     console.log("HLS Transcoding complete for:", videoId);
-//   } catch (err) {
-//     console.error("Error during HLS transcoding:", err);
-//   }
-// }
-
-// import { spawn } from 'child_process';
-
 async function transcodeVideoToHLS(inputPath, videoId) {
   console.log("Start HLS Transcoding for:", videoId);
 
@@ -104,59 +68,20 @@ async function transcodeVideoToHLS(inputPath, videoId) {
       const outputDir = `../uploads/transcoded/segments/${videoId}/${name}`;
       await fs.promises.mkdir(outputDir, { recursive: true }); // Create output directory
 
-      // FFmpeg command with arguments
-      // const ffmpeg = spawn("ffmpeg", [
-      //   "-i",
-      //   inputPath,
-      //   "-vf",
-      //   `scale=${resolution}`,
-      //   "-b:v",
-      //   bitrate,
-      //   "-hls_time",
-      //   "10",
-      //   "-hls_playlist_type",
-      //   "vod",
-      //   "-hls_segment_filename",
-      //   `${outputDir}/segment_%03d.ts`,
-      //   `${outputDir}/playlist.m3u8`,
-      // ]);
-
-      console.log(`ffmpeg -i ${inputPath} -vf scale=${resolution} -b:v ${bitrate} -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputDir}/segment_%03d.ts" ${outputDir}/playlist.m3u8`)
-
-      execCommand(
+      console.log(
         `ffmpeg -i ${inputPath} -vf scale=${resolution} -b:v ${bitrate} -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputDir}/segment_%03d.ts" ${outputDir}/playlist.m3u8`
       );
 
-      // console.log("Executing command:", ffmpeg.spawnargs.join(" "));
+      await execCommand(
+        `ffmpeg -i ${inputPath} -vf scale=${resolution} -b:v ${bitrate} -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputDir}/segment_%03d.ts" ${outputDir}/playlist.m3u8`
+      );
 
-      // return new Promise((resolve, reject) => {
-      //   ffmpeg.stdout.on("data", (data) => {
-      //     console.log(`stdout: ${data}`);
-      //   });
-
-      //   ffmpeg.stderr.on("data", (data) => {
-      //     console.error(`stderr: ${data}`);
-      //   });
-
-      //   ffmpeg.on("close", (code) => {
-      //     if (code === 0) {
-      //       resolve();
-      //     } else {
-      //       reject(new Error(`ffmpeg exited with code ${code}`));
-      //     }
-      //   });
-      // });
+      // Update MongoDB with completed status and HLS paths (assuming similar logic)
+      // ... your MongoDB update logic here ...
     }
-
-    // Update MongoDB with completed status and HLS paths (assuming similar logic)
-    // ... your MongoDB update logic here ...
     const video = await Video.findOne({ videoId });
     if (video) {
       video.status = "completed";
-      video.hlsResolutions = resolutions.map((res) => ({
-        resolution: res.name,
-        playlist: `segments/${videoId}/${res.name}/playlist.m3u8`,
-      }));
       await video.save();
     }
 
@@ -164,6 +89,39 @@ async function transcodeVideoToHLS(inputPath, videoId) {
   } catch (err) {
     console.error("Error during HLS transcoding:", err);
   }
+}
+
+async function thumbnailGeneration(inputPath, videoId) {
+  console.log("Generating thumbnail for:", videoId);
+
+  try {
+    const outputDir = `../uploads/thumbnails/${videoId}`;
+    await fs.promises.mkdir(outputDir, { recursive: true }); // Create output directory
+
+    console.log(
+      `ffmpeg -i ${inputPath} -ss 00:00:01.000 -vframes 1 ${outputDir}/thumbnail.jpg`
+    );
+
+    await execCommand(
+      `ffmpeg -i ${inputPath} -ss 00:00:01.000 -vframes 1 ${outputDir}/thumbnail.jpg`
+    );
+
+    console.log("Thumbnail generation complete for:", videoId);
+  } catch (err) {
+    console.error("Error during thumbnail generation:", err);
+  }
+}
+
+function createMasterFile(videoId, resolutions) {
+  const masterFilePath = `../uploads/transcoded/segments/${videoId}/master.m3u8`;
+  const lines = resolutions
+    .map(
+      (res) =>
+        `#EXT-X-STREAM-INF:BANDWIDTH=${res.bitrate},RESOLUTION=${res.resolution}\n${res.name}/playlist.m3u8`
+    )
+    .join("\n");
+
+  fs.writeFileSync(masterFilePath, lines);
 }
 
 function execCommand(command) {
