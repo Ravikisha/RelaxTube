@@ -3,6 +3,7 @@ import { useState } from "react";
 import VideoUploadForm from "./components/VideoUploadForm";
 import Dashboard from "./components/Dashboard";
 import VideoPlayer from "./components/VideoPlayer";
+import BatchUploadForm from "./components/BatchUploadForm";
 import { Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <div className="flex flex-row items-center gap-5 mt-5 sm:justify-end sm:mt-0 sm:ps-5">
             <Link className="font-medium text-gray-800 hover:text-gray-400 focus:outline-none focus:text-gray-400" to={'/'} aria-current="page">Home</Link>
             <Link className="font-medium text-gray-800 hover:text-gray-400 focus:outline-none focus:text-gray-400" to={'/upload'}>Upload</Link>
+            <Link className="font-medium text-gray-800 hover:text-gray-400 focus:outline-none focus:text-gray-400" to={'/batchUpload'}>Batch Upload</Link>
           </div>
         </nav>
       </header>
@@ -23,6 +25,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/upload" element={<VideoUploadForm />} />
+            <Route path="/batchUpload" element={<BatchUploadForm />} />
             <Route path="/player/:id" element={<VideoPlayer />} />
           </Routes>
         </div>
