@@ -1,15 +1,15 @@
 ![Poster](./docs/poster.png)
 
-# RealxTube
+# RelaxTube
 
-RealxTube is a scalable and efficient application designed to demonstrate the workflow of video transcoding and streaming. Built using Node.js, React, Kafka, and FFmpeg, this project showcases key features like video transcoding to multiple qualities, segment generation for smoother streaming, and thumbnail creation. The data is stored in MongoDB, while video files and metadata are managed in a local file storage system.
+RelaxTube is a scalable and efficient application designed to demonstrate the workflow of video transcoding and streaming. Built using Node.js, React, Kafka, and FFmpeg, this project showcases key features like video transcoding to multiple qualities, segment generation for smoother streaming, and thumbnail creation. The data is stored in MongoDB, while video files and metadata are managed in a local file storage system.
 
 <p float="left">
-    <img src="https://img.shields.io/github/license/ravikisa/realxtube" alt="License" />
-    <img src="https://img.shields.io/github/issues/ravikisa/realxtube" alt="Issues" />
-    <img src="https://img.shields.io/github/forks/ravikisa/realxtube" alt="Forks" />
-    <img src="https://img.shields.io/github/stars/ravikisa/realxtube" alt="Stars" />
-    <img src="https://img.shields.io/github/contributors/ravikisa/realxtube" alt="Contributors" />
+    <img src="https://img.shields.io/github/license/ravikisha/RelaxTube" alt="License" />
+    <img src="https://img.shields.io/github/issues/ravikisha/RelaxTube" alt="Issues" />
+    <img src="https://img.shields.io/github/forks/ravikisha/RelaxTube" alt="Forks" />
+    <img src="https://img.shields.io/github/stars/ravikisha/RelaxTube" alt="Stars" />
+    <img src="https://img.shields.io/github/contributors/ravikisha/RelaxTube" alt="Contributors" />
 </p>
 
 <p float="left">
@@ -55,8 +55,8 @@ RealxTube is a scalable and efficient application designed to demonstrate the wo
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/ravikisha/realxtube.git
-   cd realxtube
+   git clone https://github.com/ravikisha/RelaxTube.git
+   cd RelaxTube
    ```
 
 2. **Set Up Environment Variables**
