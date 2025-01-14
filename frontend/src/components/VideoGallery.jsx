@@ -27,8 +27,10 @@ const VideoGallery = ({ videos }) => {
               alt={video.videoId}
               className="w-full h-48 object-cover rounded-md shadow-lg group-hover:opacity-80"
             />
-            <p className="mt-2 text-lg font-medium text-gray-800 group-hover:text-blue-600">
-              {video.videoId}
+            <p className="mt-2 text-lg font-medium text-gray-800 group-hover:text-blue-600"
+              style={{fontFamily: 'Playfair Display, serif'}}
+            >
+              {video.title.length > 30 ? `${video.title.substring(0, 30)}...` : video.title}
             </p>
           </Link>
         ))}

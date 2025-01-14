@@ -12,9 +12,19 @@ const fs = require("fs");
 const app = express();
 app.use(cors());
 const PORT = 5000;
-const kafka = new Kafka({ brokers: ["localhost:9092"] });
+
+// kafka setup for producer
+const kafka = new Kafka({
+  clientId: "transcoding-system",
+  brokers: ["localhost:9092"],
+  consumer: {
+    groupId: "transcoding-group",
+  },
+});
+
 const producer = kafka.producer();
 
+// Connect to Kafka
 (async () => {
   await producer.connect();
   console.log("Kafka producer connected.");
@@ -23,6 +33,7 @@ const producer = kafka.producer();
 // Middleware
 app.use(bodyParser.json());
 
+// Multer setup
 const storage = multer.diskStorage({
   destination: "../uploads/raw",
   filename: function (req, file, cb) {
@@ -65,18 +76,60 @@ app.get("/thumbnails/:videoId", async (req, res) => {
   res.sendFile(thumbnailPath);
 });
 
+// New route for batch upload
+app.post("/uploadBatch", upload.array("videos", 10), async (req, res) => {
+  const { files } = req;
+  const { title } = req.body;
+
+  if (!files || files.length === 0)
+    return res.status(400).send("No files uploaded.");
+
+  const videoPromises = files.map(async (file, index) => {
+    const video = new Video({
+      videoId: uuidv4(),
+      originalName: file.originalname,
+      filePath: file.path,
+      status: "pending",
+      title: `title${index}` || `Untitled ${index}`
+    });
+
+    await video.save();
+
+    // Enqueue the transcoding job
+    await producer.send({
+      topic: "video-transcoding-jobs",
+      messages: [
+        {
+          value: JSON.stringify({
+            videoId: video.videoId,
+            filePath: video.filePath,
+          }),
+        },
+      ],
+    });
+
+    return video;
+  });
+
+  const uploadedVideos = await Promise.all(videoPromises);
+
+  res.status(200).json({
+    message: "Batch videos uploaded and jobs enqueued.",
+    videos: uploadedVideos,
+  });
+});
+
 app.post("/upload", upload.single("video"), async (req, res) => {
   const { file } = req;
   const { title } = req.body;
   if (!file) return res.status(400).send("No file uploaded.");
-  console.log("Title: ", title)
 
   const video = new Video({
     videoId: uuidv4(),
     originalName: file.originalname,
     filePath: file.path,
     status: "pending",
-    title: title
+    title: title,
   });
 
   await video.save();

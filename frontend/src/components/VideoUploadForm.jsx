@@ -1,11 +1,13 @@
 // src/components/VideoUploadForm.jsx
 import { useState } from "react";
 import axios from "../api";
+import { useNavigate } from "react-router-dom";
 
 const VideoUploadForm = () => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
+  const navigate = useNavigate()
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -30,6 +32,7 @@ const VideoUploadForm = () => {
       });
       console.log(response.data);
       setMessage("Upload successful! Transcoding started.");
+      navigate('/')
     } catch (error) {
       console.log(error);
       setMessage("Error uploading video." + error.getMessage());
