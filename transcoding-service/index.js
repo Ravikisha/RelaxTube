@@ -21,7 +21,7 @@ const kafka = new Kafka({
 });
 const consumer = kafka.consumer({
   groupId: "transcoding-group",
-  sessionTimeout: 3000000
+  sessionTimeout: 300000
 });
 
 (async () => {
